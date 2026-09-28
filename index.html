@@ -2,14 +2,12 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=no">
 
   <title>Seth's Dreams AR | Ronny's Art</title>
 
-  <!-- A-Frame -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-
-  <!-- MindAR -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
   <style>
@@ -17,6 +15,35 @@
       margin: 0;
       overflow: hidden;
       font-family: Arial, sans-serif;
+    }
+
+    #startScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(0, 0, 0, 0.88);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      text-align: center;
+      padding: 25px;
+      box-sizing: border-box;
+    }
+
+    #startScreen h1 {
+      margin-bottom: 5px;
+    }
+
+    #startButton {
+      margin-top: 25px;
+      padding: 16px 28px;
+      border: none;
+      border-radius: 30px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
     }
 
     #instructions {
@@ -30,79 +57,180 @@
       padding: 12px 20px;
       border-radius: 20px;
       text-align: center;
-      font-size: 14px;
       width: 80%;
       max-width: 400px;
+      display: none;
     }
   </style>
 </head>
 
 <body>
 
-<div id="instructions">
-  Point your camera at <strong>Seth's Dreams</strong>
-</div>
+  <!-- Customer start screen -->
+  <div id="startScreen">
 
-<a-scene
-  mindar-image="imageTargetSrc: ./targets.mind;"
-  color-space="sRGB"
-  renderer="colorManagement: true, physicallyCorrectLights"
-  vr-mode-ui="enabled: false"
-  device-orientation-permission-ui="enabled: false">
+    <h1>Seth's Dreams</h1>
 
-  <a-assets>
-    <video
-      id="arVideo"
-      src="./seths-dreams.mp4"
-      preload="auto"
-      loop
-      muted
-      playsinline
-      webkit-playsinline>
-    </video>
-  </a-assets>
+    <p>
+      An Augmented Reality Experience<br>
+      by Ronny's Art
+    </p>
 
-  <a-camera
-    position="0 0 0"
-    look-controls="enabled: false">
-  </a-camera>
+    <button id="startButton">
+      🔊 Start AR Experience
+    </button>
 
-  <a-entity id="target" mindar-image-target="targetIndex: 0">
+    <p style="font-size:12px; opacity:0.7; margin-top:20px;">
+      Allow camera access when prompted.
+    </p>
 
-    <a-video
-      src="#arVideo"
-      position="0 0 0.01"
-      width="1"
-      height="1.25">
-    </a-video>
+  </div>
 
-  </a-entity>
+  <!-- Instructions shown while searching -->
+  <div id="instructions">
+    Point your camera at <strong>Seth's Dreams</strong>
+  </div>
 
-</a-scene>
 
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
+  <a-scene
+    mindar-image="imageTargetSrc: ./targets.mind;"
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
 
-    const video = document.querySelector("#arVideo");
-    const target = document.querySelector("#target");
-    const instructions = document.querySelector("#instructions");
+    <a-assets>
 
-    target.addEventListener("targetFound", () => {
-      instructions.style.display = "none";
-      video.play().catch(() => {});
+      <video
+        id="arVideo"
+        src="./seths-dreams.mp4"
+        preload="auto"
+        loop
+        playsinline
+        webkit-playsinline>
+      </video>
+
+    </a-assets>
+
+
+    <a-camera
+      position="0 0 0"
+      look-controls="enabled: false">
+    </a-camera>
+
+
+    <a-entity
+      id="target"
+      mindar-image-target="targetIndex: 0">
+
+      <a-video
+        src="#arVideo"
+        position="0 0 0.01"
+        width="1"
+        height="1.25">
+      </a-video>
+
+    </a-entity>
+
+  </a-scene>
+
+
+  <script>
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+      const video =
+        document.querySelector("#arVideo");
+
+      const target =
+        document.querySelector("#target");
+
+      const startButton =
+        document.querySelector("#startButton");
+
+      const startScreen =
+        document.querySelector("#startScreen");
+
+      const instructions =
+        document.querySelector("#instructions");
+
+
+      let experienceStarted = false;
+      let targetVisible = false;
+
+
+      /*
+       * The customer's tap gives the browser
+       * permission to play audio.
+       */
+      startButton.addEventListener("click", async () => {
+
+        experienceStarted = true;
+
+        video.muted = false;
+        video.volume = 1;
+
+        /*
+         * Start and immediately pause the video.
+         * This unlocks audio playback on mobile.
+         */
+        try {
+
+          await video.play();
+
+          video.pause();
+          video.currentTime = 0;
+
+        } catch (error) {
+
+          console.log("Audio unlock:", error);
+
+        }
+
+        startScreen.style.display = "none";
+        instructions.style.display = "block";
+
+      });
+
+
+      /*
+       * Painting recognized
+       */
+      target.addEventListener("targetFound", () => {
+
+        targetVisible = true;
+
+        instructions.style.display = "none";
+
+        if (experienceStarted) {
+
+          video.play().catch(error => {
+            console.log("Video playback:", error);
+          });
+
+        }
+
+      });
+
+
+      /*
+       * Painting no longer visible
+       */
+      target.addEventListener("targetLost", () => {
+
+        targetVisible = false;
+
+        video.pause();
+
+        if (experienceStarted) {
+          instructions.style.display = "block";
+        }
+
+      });
+
     });
 
-    target.addEventListener("targetLost", () => {
-      instructions.style.display = "block";
-      video.pause();
-    });
-
-    document.body.addEventListener("click", () => {
-      video.play().catch(() => {});
-    });
-
-  });
-</script>
+  </script>
 
 </body>
 </html>
