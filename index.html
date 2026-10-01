@@ -5,7 +5,7 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1.0, user-scalable=no">
 
-  <title>Seth's Dreams AR | Ronny's Art</title>
+  <title>Blanco Books Editorial | Galeria AR</title>
 
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -66,29 +66,29 @@
 
 <body>
 
-  <!-- Customer start screen -->
+  <!-- Pantalla de inicio para el cliente -->
   <div id="startScreen">
 
-    <h1>Seth's Dreams</h1>
+    <h1>Blanco Books Editorial</h1>
 
     <p>
-      An Augmented Reality Experience<br>
-      by Ronny's Art
+      Una experiencia en Realidad Aumentada<br>
+      para nuestras obras
     </p>
 
     <button id="startButton">
-      🔊 Start AR Experience
+      Iniciar experiencia AR
     </button>
 
     <p style="font-size:12px; opacity:0.7; margin-top:20px;">
-      Allow camera access when prompted.
+      Permite el acceso a la camara cuando te lo pida.
     </p>
 
   </div>
 
-  <!-- Instructions shown while searching -->
+  <!-- Instrucciones mientras busca -->
   <div id="instructions">
-    Point your camera at <strong>Seth's Dreams</strong>
+    Apunta la camara a uno de los cuadros
   </div>
 
 
@@ -102,8 +102,17 @@
     <a-assets>
 
       <video
-        id="arVideo"
-        src="./seths-dreams.mp4"
+        id="videoIsla"
+        src="./videos/anatomia-isla.mp4"
+        preload="auto"
+        loop
+        playsinline
+        webkit-playsinline>
+      </video>
+
+      <video
+        id="videoSeths"
+        src="./videos/seths-dreams.mp4"
         preload="auto"
         loop
         playsinline
@@ -119,12 +128,28 @@
     </a-camera>
 
 
+    <!-- 0 - Anatomia de una Isla (horizontal) -->
     <a-entity
-      id="target"
+      id="targetIsla"
       mindar-image-target="targetIndex: 0">
 
       <a-video
-        src="#arVideo"
+        src="#videoIsla"
+        position="0 0 0.01"
+        width="1"
+        height="0.75">
+      </a-video>
+
+    </a-entity>
+
+
+    <!-- 1 - Seths Dreams (vertical) -->
+    <a-entity
+      id="targetSeths"
+      mindar-image-target="targetIndex: 1">
+
+      <a-video
+        src="#videoSeths"
         position="0 0 0.01"
         width="1"
         height="1.25">
@@ -139,11 +164,17 @@
 
     document.addEventListener("DOMContentLoaded", () => {
 
-      const video =
-        document.querySelector("#arVideo");
+      const videoIsla =
+        document.querySelector("#videoIsla");
 
-      const target =
-        document.querySelector("#target");
+      const videoSeths =
+        document.querySelector("#videoSeths");
+
+      const targetIsla =
+        document.querySelector("#targetIsla");
+
+      const targetSeths =
+        document.querySelector("#targetSeths");
 
       const startButton =
         document.querySelector("#startButton");
@@ -156,34 +187,47 @@
 
 
       let experienceStarted = false;
-      let targetVisible = false;
 
 
       /*
-       * The customer's tap gives the browser
-       * permission to play audio.
+       * El toque del cliente da permiso al navegador
+       * para reproducir audio.
        */
       startButton.addEventListener("click", async () => {
 
         experienceStarted = true;
 
-        video.muted = false;
-        video.volume = 1;
+        videoIsla.muted = false;
+        videoIsla.volume = 1;
+
+        videoSeths.muted = false;
+        videoSeths.volume = 1;
 
         /*
-         * Start and immediately pause the video.
-         * This unlocks audio playback on mobile.
+         * Arranca y pausa cada video de inmediato.
+         * Esto desbloquea el audio en movil.
          */
         try {
 
-          await video.play();
-
-          video.pause();
-          video.currentTime = 0;
+          await videoIsla.play();
+          videoIsla.pause();
+          videoIsla.currentTime = 0;
 
         } catch (error) {
 
-          console.log("Audio unlock:", error);
+          console.log("Audio unlock (isla):", error);
+
+        }
+
+        try {
+
+          await videoSeths.play();
+          videoSeths.pause();
+          videoSeths.currentTime = 0;
+
+        } catch (error) {
+
+          console.log("Audio unlock (seths):", error);
 
         }
 
@@ -194,33 +238,53 @@
 
 
       /*
-       * Painting recognized
+       * Obra reconocida: Anatomia de una Isla
        */
-      target.addEventListener("targetFound", () => {
-
-        targetVisible = true;
+      targetIsla.addEventListener("targetFound", () => {
 
         instructions.style.display = "none";
 
         if (experienceStarted) {
 
-          video.play().catch(error => {
-            console.log("Video playback:", error);
+          videoIsla.play().catch(error => {
+            console.log("Video isla:", error);
           });
 
         }
 
       });
 
+      targetIsla.addEventListener("targetLost", () => {
+
+        videoIsla.pause();
+
+        if (experienceStarted) {
+          instructions.style.display = "block";
+        }
+
+      });
+
 
       /*
-       * Painting no longer visible
+       * Obra reconocida: Seths Dreams
        */
-      target.addEventListener("targetLost", () => {
+      targetSeths.addEventListener("targetFound", () => {
 
-        targetVisible = false;
+        instructions.style.display = "none";
 
-        video.pause();
+        if (experienceStarted) {
+
+          videoSeths.play().catch(error => {
+            console.log("Video seths:", error);
+          });
+
+        }
+
+      });
+
+      targetSeths.addEventListener("targetLost", () => {
+
+        videoSeths.pause();
 
         if (experienceStarted) {
           instructions.style.display = "block";
